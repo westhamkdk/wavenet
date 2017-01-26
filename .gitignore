@@ -1,0 +1,10 @@
+data/
+images/
+logdir/
+output/
+
+venv/
+.idea/
+
+*.pyc
+
