@@ -9,7 +9,7 @@ import os
 import numpy as np
 import tensorflow as tf
 
-from wavenet import WaveNetModel, midi_io
+from wavenet import WaveNetModel, midi_io, melody_to_represenatation
 
 SAMPLES = 4*4*8
 NUM_OUTPUTS = 1
@@ -62,18 +62,18 @@ def get_arguments():
         type=str,
         default=STARTED_DATESTRING,
         help='Prefix of file path where the output sequences to be saved')
-    parser.add_argument(
-        '--fast_generation',
-        type=_str_to_bool,
-        default=False,
-        help='Use fast generation. Do not use when num_outputs is larger than 1')
     return parser.parse_args()
 
 
-def write_midi(waveform, filename, encoding):
+def write_midi(waveform, filename):
     seq = midi_io.seq_to_midi_file(waveform, filename)
     print(seq)
     print('Write midi file at {}'.format(filename))
+
+
+def decode(waveform, encoding):
+    if encoding == 'time_single':
+        return np.array(waveform) - 2
 
 
 def main():
@@ -91,8 +91,7 @@ def main():
         dilation_channels=wavenet_params['dilation_channels'],
         quantization_channels=wavenet_params['quantization_channels'],
         skip_channels=wavenet_params['skip_channels'],
-        use_biases=wavenet_params['use_biases'],
-        encoding=wavenet_params["encoding"])
+        use_biases=wavenet_params['use_biases'])
 
     samples = tf.placeholder(tf.int32)
 
@@ -113,23 +112,17 @@ def main():
     print('Restoring model from {}'.format(args.checkpoint))
     saver.restore(sess, args.checkpoint)
 
-    decode = samples
     quantization_channels = wavenet_params['quantization_channels']
     digits = len(str(args.num_outputs))
 
     for i in range(args.num_outputs):
-        waveform = [62.]
+        waveform = melody_to_represenatation([60], wavenet_params['midi_encoding'])
         for step in range(args.samples):
-            if args.fast_generation:
-                outputs = [next_sample]
-                outputs.extend(net.push_ops)
-                window = waveform[-1]
+            if len(waveform) > args.window:
+                window = waveform[-args.window:]
             else:
-                if len(waveform) > args.window:
-                    window = waveform[-args.window:]
-                else:
-                    window = waveform
-                outputs = [next_sample]
+                window = waveform
+            outputs = [next_sample]
 
             # Run the WaveNet to predict the next sample.
             prediction = sess.run(outputs, feed_dict={samples: window})[0]
@@ -141,9 +134,10 @@ def main():
         print()
 
         # Save the result as a midi file.
-        out = sess.run(decode, feed_dict={samples: waveform})
+        out = sess.run(samples, feed_dict={samples: waveform})
+        decoded = decode(out, encoding=wavenet_params['midi_encoding'])
         filepath = '{}_{}.mid'.format(args.output_prefix, str(i + 1).zfill(digits))
-        write_midi(out, filepath)
+        write_midi(decoded, filepath)
 
     print('Finished generating.')
 

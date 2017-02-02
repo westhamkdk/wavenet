@@ -18,7 +18,7 @@ DATA_DIRECTORY = os.path.expanduser('~/umm/data/midi/children_song/')
 # DATA_DIRECTORY = './data/midi'
 LOGDIR_ROOT = './logdir'
 CHECKPOINT_EVERY = 2000
-CONSOLE_OUTPUT_EVERY = 100
+CONSOLE_OUTPUT_EVERY = 1
 NUM_STEPS = 10000
 LEARNING_RATE = 0.001
 WAVENET_PARAMS = './midi-wavenet_params.json'
@@ -184,7 +184,7 @@ def main():
             args.data_dir,
             coord,
             sample_size=args.sample_size,
-            encoding=wavenet_params["encoding"])
+            encoding=wavenet_params["midi_encoding"])
         midi_batch = reader.dequeue(args.batch_size)
 
     # Create network.
@@ -197,8 +197,7 @@ def main():
         skip_channels=wavenet_params["skip_channels"],
         quantization_channels=wavenet_params["quantization_channels"],
         use_biases=wavenet_params["use_biases"],
-        histograms=args.histograms,
-        encoding=wavenet_params["encoding"])
+        histograms=args.histograms)
 
     if args.l2_regularization_strength == 0:
         args.l2_regularization_strength = None

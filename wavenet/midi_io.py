@@ -5,7 +5,7 @@ import tensorflow as tf
 import magenta.music as mm
 
 
-def midi_file_to_seq(midi_file, shift_to=0):
+def midi_file_to_seq(midi_file):
     seq = np.array([])
     try:
         melody = mm.midi_file_to_melody(midi_file, steps_per_quarter=4)
@@ -18,14 +18,10 @@ def midi_file_to_seq(midi_file, shift_to=0):
         tf.logging.warning('Melody of {} file has multiple tempos'.format(midi_file))
     except mm.MultipleTimeSignatureException as e:
         tf.logging.warning('Melody of {} file has multiple signature'.format(midi_file))
-    if shift_to == 0:
-        seq += 2
     return seq
 
 
-def seq_to_midi_file(seq, output_file, unshift_to=0):
-    if unshift_to == 0:
-        seq -= 2
+def seq_to_midi_file(seq, output_file):
     melody = mm.Melody(events=seq.tolist())
     note_sequence = melody.to_sequence()
     mm.sequence_proto_to_midi_file(note_sequence, output_file)

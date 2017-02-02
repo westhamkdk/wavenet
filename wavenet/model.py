@@ -42,8 +42,7 @@ class WaveNetModel(object):
                  skip_channels,
                  quantization_channels=2**8,
                  use_biases=False,
-                 histograms=False,
-                 encoding='one_hot'):
+                 histograms=False):
         '''Initializes the WaveNet model.
 
         Args:
@@ -70,7 +69,12 @@ class WaveNetModel(object):
         self.filter_width = filter_width
         self.residual_channels = residual_channels
         self.dilation_channels = dilation_channels
-        self.quantization_channels = quantization_channels
+        if hasattr(quantization_channels, '__iter__'):
+            self.quantization_channel_list = quantization_channels
+            self.quantization_channels = sum(quantization_channels)
+        else:
+            self.quantization_channel_list = None
+            self.quantization_channels = quantization_channels
         self.skip_channels = skip_channels
         self.use_biases = use_biases
         self.histograms = histograms
@@ -396,10 +400,10 @@ class WaveNetModel(object):
         return conv2
 
     def _encode(self, input_batch):
-        if self.encoding == 'one_hot':
-            return self._one_hot(input_batch)
-        else:
+        if self.quantization_channel_list:
             return self._multiple_one_hot(input_batch)
+        else:
+            return self._one_hot(input_batch)
 
     def _one_hot(self, input_batch):
         '''One-hot encodes the waveform amplitudes.
@@ -416,8 +420,17 @@ class WaveNetModel(object):
             encoded = tf.reshape(encoded, shape)
         return encoded
 
-    def _multiple_one_hot(self, input_batch):
-        return
+    def _multiple_one_hot(self, input_batches):
+        with tf.name_scope('multiple_one_hot_encode'):
+            encodeds = []
+            for i, input_batch in enumerate(input_batches):
+                encoded = tf.one_hot(
+                    input_batch,
+                    depth=self.quantization_channel_list[i],
+                    dtype=tf.float32)
+                shape = [self.batch_size, -1, self.quantization_channel_list[i]]
+                encodeds.append(tf.reshape(encoded, shape))
+        return tf.concat(2, encodeds)
 
     def predict_proba(self, waveform, name='wavenet'):
         '''Computes the probability distribution of the next sample based on
@@ -425,7 +438,7 @@ class WaveNetModel(object):
         If you want to generate audio by feeding the output of the network back
         as an input, see predict_proba_incremental for a faster alternative.'''
         with tf.name_scope(name):
-            encoded = self._one_hot(waveform)
+            encoded = self._encode(waveform)
             raw_output = self._create_network(encoded)
             out = tf.reshape(raw_output, [-1, self.quantization_channels])
             # Cast to float64 to avoid bug in TensorFlow
@@ -468,7 +481,7 @@ class WaveNetModel(object):
         '''
         with tf.name_scope(name):
             # We use this as input for the first layer.
-            encoded = self._one_hot(tf.cast(input_batch, tf.int32))
+            encoded = self._encode(input_batch)
             raw_output = self._create_network(encoded)
 
             with tf.name_scope('loss'):
