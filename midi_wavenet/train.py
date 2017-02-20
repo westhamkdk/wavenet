@@ -11,7 +11,8 @@ import time
 
 import tensorflow as tf
 
-from wavenet import WaveNetModel, MidiReader
+from wavenet import WaveNetModel
+from midi_reader import MidiReader
 
 BATCH_SIZE = 1
 DATA_DIRECTORY = os.path.expanduser('~/umm/data/midi/children_song/')

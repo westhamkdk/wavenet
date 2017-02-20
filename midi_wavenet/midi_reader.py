@@ -1,8 +1,8 @@
-import fnmatch
-import os
 import threading
 
+import fnmatch
 import numpy as np
+import os
 import tensorflow as tf
 
 import midi_io
