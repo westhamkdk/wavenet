@@ -118,23 +118,23 @@ class MidiReader(object):
 
 
 if __name__ == "__main__":
-    midi_dir = os.path.expanduser("~/midi-wavenet/data/midi")
+    data_dir = os.path.expanduser("~/midi-wavenet/data/midi")
 
     coord = tf.train.Coordinator()
-    reader = MidiReader(midi_dir, coord,
+    reader = MidiReader(data_dir, coord,
                         sample_size=None, queue_size=4, encoding='time_sep')
-    midi_batch = reader.dequeue(2)
+    batch = reader.dequeue(2)
 
     # Set up session
     sess = tf.Session(config=tf.ConfigProto(log_device_placement=False))
-    init = tf.initialize_all_variables()
+    init = tf.global_variables_initializer()
     sess.run(init)
 
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
     reader.start_threads(sess)
 
     try:
-        encoded = sess.run(midi_batch)
+        encoded = sess.run(batch)
         print encoded
     except KeyboardInterrupt:
         # Introduce a line break after ^C is displayed so save message

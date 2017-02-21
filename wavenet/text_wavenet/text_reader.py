@@ -14,9 +14,11 @@ def find_files(directory, pattern='*.txt'):
             files.append(os.path.join(root, filename))
     return files
 
+
 def _read_text(filename):
   with tf.gfile.GFile(filename, "r") as f:
     return list(f.read().decode("utf-8").replace("\n", ""))
+
 
 def load_generic_text(directory):
     '''Generator that yields text raw from the directory.'''
@@ -25,7 +27,7 @@ def load_generic_text(directory):
         text = _read_text(filename)        
         for index, item in enumerate(text):
             text[index] = ord(text[index])
-        text = np.array(text, dtype='float32')
+        text = np.array(text, dtype='int32')
         text = text.reshape(-1, 1)
         yield text, filename
 
@@ -43,9 +45,9 @@ class TextReader(object):
         self.coord = coord
         self.sample_size = sample_size
         self.threads = []
-        self.sample_placeholder = tf.placeholder(dtype=tf.float32, shape=None)
+        self.sample_placeholder = tf.placeholder(dtype=tf.int32, shape=None)
         self.queue = tf.PaddingFIFOQueue(queue_size,
-                                         ['float32'],
+                                         ['int32'],
                                          shapes=[(None, 1)])
         self.enqueue = self.queue.enqueue([self.sample_placeholder])
 
@@ -76,7 +78,7 @@ class TextReader(object):
                     sess.run(self.enqueue,
                              feed_dict={self.sample_placeholder: text})
 
-    def stop_threads():
+    def stop_threads(self):
         for t in self.threads:
             t.stop()
 

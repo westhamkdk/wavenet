@@ -12,15 +12,14 @@ import time
 import tensorflow as tf
 
 from wavenet import WaveNetModel
+from __init__ import PROJECT_ROOT, LOGDIR_ROOT, WAVENET_PARAMS
 from text_reader import TextReader
 
 BATCH_SIZE = 1
-DATA_DIRECTORY = './data'
-LOGDIR_ROOT = './logdir'
+DATA_DIRECTORY = os.path.join(PROJECT_ROOT, 'data/text')
 CHECKPOINT_EVERY = 500
 NUM_STEPS = 4000
 LEARNING_RATE = 0.001
-WAVENET_PARAMS = './wavenet_params.json'
 STARTED_DATESTRING = "{0:%Y-%m-%dT%H-%M-%S}".format(datetime.now())
 SAMPLE_SIZE = 1000
 L2_REGULARIZATION_STRENGTH = 0
@@ -195,7 +194,7 @@ def main():
 
     # Set up session
     sess = tf.Session(config=tf.ConfigProto(log_device_placement=False))
-    init = tf.initialize_all_variables()
+    init = tf.global_variables_initializer()
     sess.run(init)
 
     # Saver for storing checkpoints of the model.
@@ -218,6 +217,7 @@ def main():
     reader.start_threads(sess)
 
     try:
+        import pdb; pdb.set_trace()
         last_saved_step = saved_global_step
         for step in range(saved_global_step + 1, args.num_steps):
             start_time = time.time()

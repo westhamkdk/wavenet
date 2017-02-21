@@ -12,17 +12,16 @@ import time
 import tensorflow as tf
 
 from wavenet import WaveNetModel
+from __init__ import PROJECT_ROOT, LOGDIR_ROOT, WAVENET_PARAMS
 from midi_reader import MidiReader
 
 BATCH_SIZE = 1
 DATA_DIRECTORY = os.path.expanduser('~/umm/data/midi/children_song/')
-# DATA_DIRECTORY = './data/midi'
-LOGDIR_ROOT = './logdir'
+# DATA_DIRECTORY = os.path.join(PROJECT_ROOT, 'data')
 CHECKPOINT_EVERY = 2000
 CONSOLE_OUTPUT_EVERY = 1
 NUM_STEPS = 10000
 LEARNING_RATE = 0.001
-WAVENET_PARAMS = './midi-wavenet_params.json'
 STARTED_DATESTRING = "{0:%Y-%m-%dT%H-%M-%S}".format(datetime.now())
 SAMPLE_SIZE = None
 L2_REGULARIZATION_STRENGTH = 0
@@ -214,7 +213,7 @@ def main():
 
     # Set up session
     sess = tf.Session(config=tf.ConfigProto(log_device_placement=False))
-    init = tf.initialize_all_variables()
+    init = tf.global_variables_initializer()
     sess.run(init)
 
     # Saver for storing checkpoints of the model.

@@ -9,15 +9,15 @@ import numpy as np
 import tensorflow as tf
 
 from wavenet import WaveNetModel
-from midi_wavenet import midi_io
+from __init__ import LOGDIR_ROOT, WAVENET_PARAMS
+import midi_io
 from midi_reader import melody_to_represenatation
 
 SAMPLES = 4*4*8
 NUM_OUTPUTS = 1
 STARTED_DATESTRING = "{0:%Y-%m-%dT%H-%M-%S}".format(datetime.now())
 WINDOW = 4*4*8
-LOGDIR = './logdir'
-WAVENET_PARAMS = './midi-wavenet_params.json'
+LOGDIR = LOGDIR_ROOT
 
 
 def get_arguments():
@@ -102,7 +102,7 @@ def main():
         next_sample = net.predict_proba(samples)
 
     if args.fast_generation:
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
         sess.run(net.init_ops)
 
     variables_to_restore = {

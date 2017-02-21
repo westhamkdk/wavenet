@@ -9,12 +9,12 @@ import numpy as np
 import os
 import tensorflow as tf
 
-from wavenet import WaveNetModel
+from .. import WaveNetModel
+from . import LOGDIR_ROOT, WAVENET_PARAMS
 
 SAMPLES = 16000
-LOGDIR = './logdir'
 WINDOW = 8000
-WAVENET_PARAMS = './wavenet_params.json'
+LOGDIR = LOGDIR_ROOT
 SAVE_EVERY = None
 
 
@@ -107,7 +107,7 @@ def main():
         next_sample = net.predict_proba(samples)
 
     if args.fast_generation:
-        sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
         sess.run(net.init_ops)
 
     variables_to_restore = {
